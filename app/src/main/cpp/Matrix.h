@@ -3,7 +3,8 @@
 class Matrix {
 public:
     Matrix();
-    Matrix(const float *array);
+
+    [[maybe_unused]] Matrix(const float *array);
     void multiply(const Matrix& rhs);
     void rotate(float a, float x, float y, float z);
     void setIdentity();

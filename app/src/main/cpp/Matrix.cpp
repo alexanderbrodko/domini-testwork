@@ -6,7 +6,7 @@ Matrix::Matrix() {
     setIdentity();
 }
 
-Matrix::Matrix(const float *array) {
+[[maybe_unused]] Matrix::Matrix(const float *array) {
     data[0] = array[0];
     data[1] = array[1];
     data[2] = array[2];

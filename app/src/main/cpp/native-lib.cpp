@@ -62,7 +62,8 @@ Batch batch;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceCreated(JNIEnv* env, jobject obj) {
+Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceCreated([[maybe_unused]] JNIEnv* env,
+                                                              [[maybe_unused]] jobject obj) {
     batch.initProgram(vertexShaderSource, fragmentShaderSource);
     batch.setIndexData(indices);
     batch.setAttribData("aPosition", vertices, 3, GL_FLOAT);
@@ -71,13 +72,15 @@ Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceCreated(JNIEnv* env, jobje
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceChanged(JNIEnv* env, jobject obj, jint width, jint height) {
+Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceChanged([[maybe_unused]] JNIEnv* env,
+                                    [[maybe_unused]] jobject obj, jint width, jint height) {
     batch.setViewport(width, height);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_testwork_MyGLRenderer_nativeOnDrawFrame(JNIEnv* env, jobject obj, jfloat orbit) {
+Java_com_example_testwork_MyGLRenderer_nativeOnDrawFrame([[maybe_unused]] JNIEnv* env,
+                                                         [[maybe_unused]] jobject obj, jfloat orbit) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Matrix modelViewMatrix;
