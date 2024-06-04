@@ -6,8 +6,7 @@
 #include <map>
 #include "Matrix.h"
 
-#define LOG_TAG "Batch"
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Batch", __VA_ARGS__)
 
 class Batch {
     typedef struct {
@@ -26,10 +25,9 @@ public:
     void initProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
     void setViewport(int width, int height);
 
-    template<typename glType>
+    template<typename glType,
+            typename = typename std::enable_if<std::is_array<glType>::value>>
     void setAttribData(const std::string &name, const glType &data, int cpv, GLuint type, bool needNormalize = false) {
-        static_assert(std::is_array<glType>::value);
-
         size_t count = sizeof(data) / sizeof(data[0]);
 
         if (_attributes.count(name) == 0) {
@@ -52,10 +50,10 @@ public:
         checkGlError("glBufferData " + name);
     }
 
-    template<typename glType>
+    template<typename glType,
+            typename = typename std::enable_if<std::is_array<glType>::value &&
+                                               std::is_integral<typename std::remove_reference<decltype(std::declval<glType>()[0])>::type>::value>::type>
     void setIndexData(const glType &data) {
-        static_assert(std::is_array<glType>::value);
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
         checkGlError("glBufferData index");
@@ -63,14 +61,48 @@ public:
         _indicesCount = sizeof(data) / sizeof(data[0]);
     }
 
+    template<typename glType,
+            typename = typename std::enable_if<std::is_array<glType>::value &&
+                                               std::is_floating_point<typename std::remove_reference<decltype(std::declval<glType>()[0])>::type>::value>::type>
+    void setUniform(const std::string &name, const glType &value) {
+        glUseProgram(_program);
+
+        GLint location = glGetUniformLocation(_program, name.c_str());
+        checkGlError("glGetUniformLocation " + name);
+
+        size_t count = sizeof(glType) / sizeof(value[0]);
+
+        if (count > 1 && count < 5) {
+            using setUniformFunc = void (*) (GLint location, GLsizei count, const GLfloat *value);
+            setUniformFunc functions[] = {
+                    glUniform2fv,
+                    glUniform3fv,
+                    glUniform4fv
+            };
+            auto glUniformFunc = functions[count - 2];
+            glUniformFunc(location, 1, value);
+        } else {
+            LOGE("uniform array size %d not supported\n", (int)count);
+        }
+        checkGlError("set uniform " + name);
+    }
+
+    void setUniform(const std::string &name, float value);
+
+    void setTexture(const std::string &name, const uint8_t* imageData, int width, int height, int channels, GLuint filter);
+
     void draw(const Matrix& modelViewMatrix);
 
 private:
     GLuint _program;
-    GLuint _matrixHandle;
+    GLuint _projectionMatrixHandle;
+    GLuint _modelViewMatrixHandle;
     Matrix _projectionMatrix;
 
     std::map<std::string, Attribute> _attributes;
+
+    GLuint _textureId;
+    GLint _textureLocation;
 
     GLuint _index;
     GLsizei _indicesCount;

@@ -1,6 +1,8 @@
 #include "Batch.h"
 #include <cstdlib>
 
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Batch", __VA_ARGS__)
+
 Batch::Batch() : _program(0) {}
 
 void Batch::initProgram(const char* vertexShaderSource, const char* fragmentShaderSource) {
@@ -9,8 +11,9 @@ void Batch::initProgram(const char* vertexShaderSource, const char* fragmentShad
         LOGE("Could not create program.");
         return;
     }
-    
-    _matrixHandle = glGetUniformLocation(_program, "uMVPMatrix");
+
+    _projectionMatrixHandle = glGetUniformLocation(_program, "uProjectionMatrix");
+    _modelViewMatrixHandle = glGetUniformLocation(_program, "uModelViewMatrix");
 
     GLuint bufs[1];
     glGenBuffers(1, bufs);
@@ -38,10 +41,14 @@ void Batch::draw(const Matrix& modelViewMatrix) {
     glUseProgram(_program);
     checkGlError("glUseProgram");
 
-    Matrix mvpMatrix = _projectionMatrix;
-    mvpMatrix.multiply(modelViewMatrix);
-    glUniformMatrix4fv(_matrixHandle, 1, GL_FALSE, mvpMatrix.getData());
-    checkGlError("glUniformMatrix4fv");
+    glBindTexture(GL_TEXTURE_2D, _textureId);
+    glUniform1i(_textureLocation, 0);
+
+    glUniformMatrix4fv(_projectionMatrixHandle, 1, GL_FALSE, _projectionMatrix.getData());
+    checkGlError("glUniformMatrix4fv _projectionMatrixHandle");
+
+    glUniformMatrix4fv(_modelViewMatrixHandle, 1, GL_FALSE, modelViewMatrix.getData());
+    checkGlError("glUniformMatrix4fv modelViewMatrix");
 
     for (auto [key, attr] : _attributes) {
         glBindBuffer(GL_ARRAY_BUFFER, attr.buffer);
@@ -58,10 +65,7 @@ void Batch::draw(const Matrix& modelViewMatrix) {
         glEnableVertexAttribArray(attr.location);
     }
 
-
     glDrawElements(GL_TRIANGLES, _indicesCount, GL_UNSIGNED_SHORT, nullptr);
-    checkGlError("glDrawElements");
-
     checkGlError("glDrawElements");
 }
 
@@ -131,3 +135,36 @@ void Batch::checkGlError(const std::string &op) {
         LOGE("after %s() glError (0x%x)\n", op.c_str(), error);
     }
 }
+
+void Batch::setTexture(const std::string &name, const uint8_t* imageData, int width, int height, int channels, GLuint filter) {
+    glGenTextures(1, &_textureId);
+    glBindTexture(GL_TEXTURE_2D, _textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+
+    GLenum format;
+    if (channels == 3) {
+        format = GL_RGB;
+    } else if (channels == 4) {
+        format = GL_RGBA;
+    } else {
+        LOGE("Unsupported number of channels %d\n", channels);
+        return;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    _textureLocation = glGetUniformLocation(_program, name.c_str());
+}
+
+void Batch::setUniform(const std::string &name, float value)  {
+    GLint location = glGetUniformLocation(_program, name.c_str());
+
+    glUniform1f(location, value);
+    checkGlError("set uniform " + name);
+}
+

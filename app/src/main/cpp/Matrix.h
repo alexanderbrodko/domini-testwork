@@ -4,7 +4,7 @@ class Matrix {
 public:
     Matrix();
 
-    [[maybe_unused]] Matrix(const float *array);
+    Matrix(const float *array);
     void multiply(const Matrix& rhs);
     void rotate(float a, float x, float y, float z);
     void setIdentity();

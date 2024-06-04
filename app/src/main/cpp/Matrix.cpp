@@ -1,12 +1,15 @@
 #include "Matrix.h"
 #include <cmath>
 #include <stdexcept>
+#include <android/log.h>
+
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Matrix", __VA_ARGS__)
 
 Matrix::Matrix() {
     setIdentity();
 }
 
-[[maybe_unused]] Matrix::Matrix(const float *array) {
+Matrix::Matrix(const float *array) {
     data[0] = array[0];
     data[1] = array[1];
     data[2] = array[2];
@@ -165,7 +168,7 @@ const float* Matrix::getData() const {
 
 float& Matrix::operator[](int index)  {
     if (index < 0 || index >= 16) {
-        throw std::out_of_range("Matrix index out of bounds");
+        LOGE("Matrix index out of bounds");
     }
     return data[index];
 }
