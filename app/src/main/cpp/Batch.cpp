@@ -14,8 +14,7 @@ void Batch::initProgram(const char* vertexShaderSource, const char* fragmentShad
 
     GLuint bufs[1];
     glGenBuffers(1, bufs);
-
-    _attributes["index"] = { -1, bufs[0], 1 };
+    _index = bufs[0];
 }
 
 Batch::~Batch() {
@@ -55,15 +54,14 @@ void Batch::draw(const Matrix& modelViewMatrix) {
                 0,
                 0
         );
-        checkGlError("glVertexAttribPointer");
+        checkGlError("glVertexAttribPointer " + key);
         glEnableVertexAttribArray(attr.location);
     }
 
 
-    auto [location, buffer, cpv, type, needNormalize, size] = _attributes["index"];
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    glDrawElements(GL_TRIANGLES, _indicesCount, GL_UNSIGNED_SHORT, nullptr);
+    checkGlError("glDrawElements");
 
-    glDrawArrays(GL_TRIANGLES, 0, size);
     checkGlError("glDrawElements");
 }
 

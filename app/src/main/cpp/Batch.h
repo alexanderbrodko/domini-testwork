@@ -1,7 +1,6 @@
 #pragma once
 
 #include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #include <android/log.h>
 #include <string>
 #include <map>
@@ -28,7 +27,7 @@ public:
     void setViewport(int width, int height);
 
     template<typename glType>
-    void setAttribData(const std::string &name, const glType &data, int cpv, bool needNormalize = false) {
+    void setAttribData(const std::string &name, const glType &data, int cpv, GLuint type, bool needNormalize = false) {
         static_assert(std::is_array<glType>::value);
 
         size_t count = sizeof(data) / sizeof(data[0]);
@@ -43,13 +42,13 @@ public:
             GLuint bufs[1];
             glGenBuffers(1, bufs);
 
-            _attributes[name] = { location, bufs[0], cpv, GL_FLOAT, needNormalize, count };
+            _attributes[name] = { location, bufs[0], cpv, type, needNormalize, count };
         }
 
         auto &attrib = _attributes[name];
 
-        glBindBuffer(GL_ARRAY_BUFFER, attrib.location);
-        glBufferData(GL_ARRAY_BUFFER, count, data, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, attrib.buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
         checkGlError("glBufferData " + name);
     }
 
@@ -57,14 +56,11 @@ public:
     void setIndexData(const glType &data) {
         static_assert(std::is_array<glType>::value);
 
-        size_t count = sizeof(data) / sizeof(data[0]);
-
-        auto [location, buffer, cpv, type, needNormalize, size] = _attributes["index"];
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count, data, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
         checkGlError("glBufferData index");
 
-        _attributes["index"].size = count;
+        _indicesCount = sizeof(data) / sizeof(data[0]);
     }
 
     void draw(const Matrix& modelViewMatrix);
@@ -73,9 +69,11 @@ private:
     GLuint _program;
     GLuint _matrixHandle;
     Matrix _projectionMatrix;
-    int _indicesCount;
 
     std::map<std::string, Attribute> _attributes;
+
+    GLuint _index;
+    GLsizei _indicesCount;
 
     GLuint loadShader(GLenum shaderType, const char* pSource);
     GLuint createProgram(const char* pVertexSource, const char* pFragmentSource);

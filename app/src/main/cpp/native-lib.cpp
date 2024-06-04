@@ -47,14 +47,14 @@ const GLushort indices[] = {
 };
 
 const GLubyte colors[] = {
-        255, 0, 0, 255,
-        0, 255, 0, 255,
-        0, 0, 255, 255,
-        255, 255, 0, 255,
-        0, 255, 255, 255,
-        255, 0, 255, 255,
-        127, 127, 127, 255,
-        255, 255, 255, 255
+        255, 0, 0,
+        0, 255, 0,
+        0, 0, 255,
+        255, 255, 0,
+        0, 255, 255,
+        255, 0, 255,
+        127, 127, 127,
+        255, 255, 255
 };
 
 
@@ -64,9 +64,9 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_testwork_MyGLRenderer_nativeOnSurfaceCreated(JNIEnv* env, jobject obj) {
     batch.initProgram(vertexShaderSource, fragmentShaderSource);
-    batch.setAttribData("aPosition", vertices, 3);
-    batch.setAttribData("aColor", colors, 3, true);
     batch.setIndexData(indices);
+    batch.setAttribData("aPosition", vertices, 3, GL_FLOAT);
+    batch.setAttribData("aColor", colors, 3, GL_UNSIGNED_BYTE, true);
 }
 
 extern "C"
@@ -81,9 +81,12 @@ Java_com_example_testwork_MyGLRenderer_nativeOnDrawFrame(JNIEnv* env, jobject ob
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Matrix modelViewMatrix;
-    modelViewMatrix.translate(0.0f, 0.0f, -5.0f);
+
+    modelViewMatrix.translate(0.0f, 0.0f, -10.0f);
+    modelViewMatrix.rotate(0.5, 1.0f, 0.0f, 0.0f);
+
     modelViewMatrix.rotate(orbit, 0.0f, 1.0f, 0.0f);
-    modelViewMatrix.translate(0.0f, 0.0f, -5.0f);
+    modelViewMatrix.translate(0.0f, 0.0f, -2.0f);
 
     batch.draw(modelViewMatrix);
 }

@@ -2,7 +2,6 @@ package com.example.testwork;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 import android.view.MotionEvent;
 
 public class MyGLSurfaceView extends GLSurfaceView {
@@ -12,7 +11,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
     private float previousX;
     private float orbit = 0.0f;
     private float orbitSpeed = 0.0f;
-    private float dampingFactor = 0.99f; // Коэффициент затухания скорости (демпфирования)
+    private final float dampingFactor = 0.99f; // Коэффициент затухания скорости (демпфирования)
 
     public MyGLSurfaceView(Context context) {
         super(context);
@@ -50,7 +49,6 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     public void moveOrbit(float delta) {
         orbitSpeed += delta * 0.0001f;
-        Log.d("MyGLSurfaceView", "moveOrbit: delta = " + delta);
     }
 
     public void update() {
